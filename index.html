@@ -19,12 +19,12 @@
 <div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Clique esquerdo: posicionar portal azul. Clique direito: posicionar portal laranja.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: portal azul · Direito: portal laranja · Esc soltar cursor</div></div>
 <script type="module">
 import * as THREE from 'three';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xffffff);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xf0f0f0);
 const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);camera.position.set(0,1.7,7);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xffffff,0xbfc6cf,2.2));
 const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(-5,11,7);scene.add(key);
-const white=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92,metalness:0});
+const white=new THREE.MeshStandardMaterial({color:0xd8d8d8,roughness:.92,metalness:0});
 const portalable=[];
 function roomSurface(x,y,z,sx,sy,sz){
  const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),white);mesh.position.set(x,y,z);mesh.receiveShadow=true;mesh.userData.portalable=true;scene.add(mesh);portalable.push(mesh);return mesh;
@@ -89,14 +89,14 @@ function portalCrossing(prev,next){
  for(const p of portals){const src=p.group,dst=p.other.group;const a=src.worldToLocal(prev.clone()),b=src.worldToLocal(next.clone());
   if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>.1&&b.y<portalH-.05){
    const mapped=new THREE.Vector3(-b.x,b.y,-b.z);dst.localToWorld(mapped);player.pos.copy(mapped).add(dst.getWorldDirection(new THREE.Vector3()).multiplyScalar(.35));
-   const direction=new THREE.Vector3(Math.sin(player.yaw),0,-Math.cos(player.yaw));const dl=src.worldToLocal(prev.clone().add(direction)).sub(src.worldToLocal(prev.clone()));dl.x=-dl.x;dl.z=-dl.z;const worldDir=dst.localToWorld(dl.clone().add(dst.position.clone())).sub(dst.position);player.yaw=Math.atan2(worldDir.x,-worldDir.z);player.vel.applyAxisAngle(new THREE.Vector3(0,1,0),Math.PI);notice.textContent='Travessia concluída — espaço conectado!';
+   const direction=new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw));const dl=src.worldToLocal(prev.clone().add(direction)).sub(src.worldToLocal(prev.clone()));dl.x=-dl.x;dl.z=-dl.z;const worldDir=dst.localToWorld(dl.clone().add(dst.position.clone())).sub(dst.position);player.yaw=Math.atan2(worldDir.x,-worldDir.z);player.vel.applyAxisAngle(new THREE.Vector3(0,1,0),Math.PI);notice.textContent='Travessia concluída — espaço conectado!';
    return true;
   }
  }return false;
 }
 let last=performance.now(),jumpWasDown=false;
 function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.04);last=now;
- const forward=new THREE.Vector3(Math.sin(player.yaw),0,-Math.cos(player.yaw));const right=new THREE.Vector3(Math.cos(player.yaw),0,Math.sin(player.yaw));const wish=new THREE.Vector3();
+ const forward=new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw));const right=new THREE.Vector3(Math.cos(player.yaw),0,-Math.sin(player.yaw));const wish=new THREE.Vector3();
  if(keys.KeyW)wish.add(forward);if(keys.KeyS)wish.sub(forward);if(keys.KeyD)wish.add(right);if(keys.KeyA)wish.sub(right);if(wish.lengthSq())wish.normalize();
  player.vel.x+=(wish.x*7-player.vel.x)*Math.min(1,dt*9);player.vel.z+=(wish.z*7-player.vel.z)*Math.min(1,dt*9);
  if(keys.Space&&!jumpWasDown&&player.grounded){player.vel.y=6.5;player.grounded=false}jumpWasDown=!!keys.Space;player.vel.y-=18*dt;
