@@ -42,11 +42,21 @@ const portalW=1.45,portalH=2.55,rtSize=1024;
 function makePortal(color,pos,yaw){
  const group=new THREE.Group();group.position.copy(pos);group.rotation.y=yaw;scene.add(group);
  const ringMat=new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:2.1,metalness:.35,roughness:.25});
- const outer=new THREE.Mesh(new THREE.TorusGeometry(.83,.085,12,64),ringMat);outer.scale.y=portalH/(portalW*2);outer.position.y=portalH/2;group.add(outer);
- const inner=new THREE.Mesh(new THREE.TorusGeometry(.70,.035,10,64),new THREE.MeshBasicMaterial({color:color===0x42cfff?0x9beeff:0xffb08a}));inner.scale.y=portalH/(portalW*2);inner.position.y=portalH/2;group.add(inner);
+ // Molduras elípticas: o brilho fica no contorno, sem invadir o centro da abertura.
+ const outerGeometry=new THREE.TorusGeometry(.83,.085,12,64);
+ const outer=new THREE.Mesh(outerGeometry,ringMat);
+ outer.scale.set((portalW+.20)/1.83,(portalH+.20)/1.83,1);
+ outer.position.set(0,portalH/2,.045);
+ group.add(outer);
+ const innerGeometry=new THREE.TorusGeometry(.70,.035,10,64);
+ const inner=new THREE.Mesh(innerGeometry,new THREE.MeshBasicMaterial({color:color===0x42cfff?0x9beeff:0xffb08a}));
+ inner.scale.set(portalW/1.47,portalH/1.47,1);
+ inner.position.set(0,portalH/2,.035);
+ group.add(inner);
  const rt=new THREE.WebGLRenderTarget(rtSize,Math.round(rtSize*portalH/portalW));rt.texture.colorSpace=THREE.SRGBColorSpace;
  const surface=new THREE.Mesh(new THREE.PlaneGeometry(portalW,portalH),new THREE.MeshBasicMaterial({map:rt.texture,side:THREE.DoubleSide}));
- surface.position.set(0,portalH/2,0.005);group.add(surface);
+ // A imagem fica atrás das molduras para que o contorno colorido permaneça sempre visível.
+ surface.position.set(0,portalH/2,-.015);group.add(surface);
  const glow=new THREE.PointLight(color,3.2,5);glow.position.set(0,portalH/2,.6);group.add(glow);
  return {group,surface,rt,color};
 }
