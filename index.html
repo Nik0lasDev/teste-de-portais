@@ -64,7 +64,9 @@ const player={pos:new THREE.Vector3(0,1.7,8),vel:new THREE.Vector3(),yaw:0,pitch
 const keys={};let locked=false,selected=0;const portals=[A,B];const notice=document.querySelector('#notice');
 document.querySelector('#start').addEventListener('click',()=>{document.querySelector('#menu').style.display='none';document.querySelector('#hud').style.display='block';renderer.domElement.requestPointerLock()});
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&document.querySelector('#menu').style.display==='none'){notice.textContent='Clique na cena para continuar.'}});
-renderer.domElement.addEventListener('click',()=>{if(!locked&&document.querySelector('#menu').style.display==='none')renderer.domElement.requestPointerLock();else if(locked){selected=0;document.querySelector('#selected').textContent='PORTAL AZUL SELECIONADO';shootPortal()}});\nrenderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());\nrenderer.domElement.addEventListener('mousedown',e=>{if(e.button===2&&locked){selected=1;document.querySelector('#selected').textContent='PORTAL LARANJA SELECIONADO';shootPortal()}});
+renderer.domElement.addEventListener('click',()=>{if(!locked&&document.querySelector('#menu').style.display==='none')renderer.domElement.requestPointerLock();else if(locked){selected=0;document.querySelector('#selected').textContent='PORTAL AZUL SELECIONADO';shootPortal()}});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+renderer.domElement.addEventListener('mousedown',e=>{if(e.button===2&&locked){selected=1;document.querySelector('#selected').textContent='PORTAL LARANJA SELECIONADO';shootPortal()}});
 document.addEventListener('mousemove',e=>{if(!locked)return;player.yaw-=e.movementX*.0022;player.pitch-=e.movementY*.0022;player.pitch=Math.max(-1.45,Math.min(1.45,player.pitch))});
 document.addEventListener('keydown',e=>{keys[e.code]=true});
 document.addEventListener('keyup',e=>keys[e.code]=false);
