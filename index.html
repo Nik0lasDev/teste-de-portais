@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PORTAIS — Experimento 3D</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,Segoe UI,sans-serif}*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#080b12;color:#edf4ff}canvas{display:block}
+#menu{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#1c3150dd,#060910f5 72%);padding:24px}
+.panel{width:min(620px,100%);padding:clamp(24px,5vw,48px);border:1px solid #5d8cb766;border-radius:20px;background:#0b1323e8;box-shadow:0 25px 100px #0009}
+.kicker{letter-spacing:.28em;font-size:11px;color:#79d9ff;font-weight:800}.panel h1{font-size:clamp(38px,8vw,68px);line-height:.95;margin:16px 0}.panel h1 span{color:#70dcff}.panel p{color:#a9bad1;line-height:1.65}.start{border:0;border-radius:10px;background:#76ddff;color:#06101b;font-weight:900;padding:15px 24px;font-size:14px;cursor:pointer;margin-top:14px}.start:hover{background:#b4edff}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}.top{position:absolute;top:20px;left:20px;padding:12px 16px;border:1px solid #7bb8d744;border-radius:10px;background:#08101bc9;font-size:12px;color:#c8e8ff;letter-spacing:.06em}.top b{color:white}.help{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 15px;border:1px solid #7bb8d744;border-radius:10px;background:#08101bc9;color:#c3d4e8;font-size:12px;white-space:nowrap}.cross{position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%)}.cross:before,.cross:after{content:"";position:absolute;background:#eaf9ff;box-shadow:0 0 5px #7be5ff}.cross:before{width:14px;height:1px;top:7px}.cross:after{height:14px;width:1px;left:7px}
+#notice{position:absolute;top:76px;left:50%;transform:translateX(-50%);font-size:12px;color:#9deaff;text-shadow:0 2px 8px #000}
+@media(max-width:600px){.help{white-space:normal;width:90%;text-align:center;bottom:10px}.top{top:10px;left:10px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Um pequeno laboratório para experimentar portais conectados em um cenário tridimensional. Posicione-se, atravesse a abertura e observe como o espaço se conecta do outro lado.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>1 / 2</b> trocar o portal selecionado · <b>Botão esquerdo</b> disparar · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
+<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Encontre as duas aberturas e atravesse-as.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · 1/2 selecionar · Clique disparar portal · Esc soltar cursor</div></div>
+<script type="module">
+import * as THREE from 'three';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x090f1b);scene.fog=new THREE.Fog(0x090f1b,24,75);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);camera.position.set(0,1.7,8);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xa8d8ff,0x172033,2.0));
+const key=new THREE.DirectionalLight(0xd4eaff,3);key.position.set(-8,14,8);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+const mats={floor:new THREE.MeshStandardMaterial({color:0x182537,roughness:.83}),wall:new THREE.MeshStandardMaterial({color:0x293a50,roughness:.7}),dark:new THREE.MeshStandardMaterial({color:0x101a2a,metalness:.25,roughness:.5}),white:new THREE.MeshStandardMaterial({color:0x9db5ce,metalness:.3,roughness:.4})};
+function box(x,y,z,sx,sy,sz,mat,cast=true){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;scene.add(m);return m}
+box(0,-.25,0,30,.5,30,mats.floor);
+for(let i=-14;i<=14;i+=2){box(i,.006,0,.018,.012,30,new THREE.MeshBasicMaterial({color:0x38506b}),false);box(0,.006,i,30,.012,.018,new THREE.MeshBasicMaterial({color:0x38506b}),false)}
+// Perimeter walls and test architecture
+box(0,2,-15,30,4,.5,mats.wall);box(0,2,15,30,4,.5,mats.wall);box(-15,2,0,.5,4,30,mats.wall);box(15,2,0,.5,4,30,mats.wall);
+box(-7,1.5,-5,1,3,8,mats.wall);box(5,1.5,1,1,3,8,mats.wall);box(1,2.5,-7,5,5,.5,mats.wall);box(9,.8,-7,2,1.6,2,mats.dark);box(-9,.6,5,2,1.2,2,mats.dark);
+for(let x=-12;x<=12;x+=4)for(let z=-12;z<=12;z+=4){if(Math.abs(x)<7&&Math.abs(z)<7)continue;box(x,.035,z,.08,.04,.08,new THREE.MeshBasicMaterial({color:0x5d7b9c}),false)}
+// Portal surfaces are rendered from paired virtual cameras into render targets.
+const portalW=1.45,portalH=2.55,rtSize=1024;
+function makePortal(color,pos,yaw){
+ const group=new THREE.Group();group.position.copy(pos);group.rotation.y=yaw;scene.add(group);
+ const ringMat=new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:2.1,metalness:.35,roughness:.25});
+ const outer=new THREE.Mesh(new THREE.TorusGeometry(.83,.085,12,64),ringMat);outer.scale.y=portalH/(portalW*2);outer.position.y=portalH/2;group.add(outer);
+ const inner=new THREE.Mesh(new THREE.TorusGeometry(.70,.035,10,64),new THREE.MeshBasicMaterial({color:color===0x42cfff?0x9beeff:0xffb08a}));inner.scale.y=portalH/(portalW*2);inner.position.y=portalH/2;group.add(inner);
+ const rt=new THREE.WebGLRenderTarget(rtSize,Math.round(rtSize*portalH/portalW));rt.texture.colorSpace=THREE.SRGBColorSpace;
+ const surface=new THREE.Mesh(new THREE.PlaneGeometry(portalW,portalH),new THREE.MeshBasicMaterial({map:rt.texture,side:THREE.DoubleSide}));
+ surface.position.set(0,portalH/2,0.005);group.add(surface);
+ const glow=new THREE.PointLight(color,3.2,5);glow.position.set(0,portalH/2,.6);group.add(glow);
+ return {group,surface,rt,color};
+}
+const A=makePortal(0x42cfff,new THREE.Vector3(0,0,-14.72),0);
+const B=makePortal(0xff713f,new THREE.Vector3(14.72,0,2),-Math.PI/2);
+A.other=B;B.other=A;
+const portalCam=new THREE.PerspectiveCamera();const tempPos=new THREE.Vector3(),local=new THREE.Vector3();const q1=new THREE.Quaternion(),q2=new THREE.Quaternion(),flip=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI);
+function updatePortalView(p){
+ const src=p.group,dst=p.other.group;
+ src.updateMatrixWorld(true);dst.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+ local.copy(camera.position);src.worldToLocal(local);local.x=-local.x;local.z=-local.z;
+ portalCam.position.copy(local);dst.localToWorld(portalCam.position);
+ q1.copy(src.quaternion).invert().multiply(camera.quaternion);q1.premultiply(flip);portalCam.quaternion.copy(dst.quaternion).multiply(q1);
+ portalCam.fov=camera.fov;portalCam.aspect=portalW/portalH;portalCam.near=.05;portalCam.far=160;portalCam.updateProjectionMatrix();portalCam.updateMatrixWorld(true);
+ p.surface.visible=false;p.other.surface.visible=false;
+ renderer.setRenderTarget(p.rt);renderer.clear();renderer.render(scene,portalCam);renderer.setRenderTarget(null);
+ p.surface.visible=true;p.other.surface.visible=true;
+}
+const player={pos:new THREE.Vector3(0,1.7,8),vel:new THREE.Vector3(),yaw:0,pitch:0,grounded:false};camera.position.copy(player.pos);
+const keys={};let locked=false,selected=0;const portals=[A,B];const notice=document.querySelector('#notice');
+document.querySelector('#start').addEventListener('click',()=>{document.querySelector('#menu').style.display='none';document.querySelector('#hud').style.display='block';renderer.domElement.requestPointerLock()});
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&document.querySelector('#menu').style.display==='none'){notice.textContent='Clique na cena para continuar.'}});
+renderer.domElement.addEventListener('click',()=>{if(!locked&&document.querySelector('#menu').style.display==='none')renderer.domElement.requestPointerLock();else if(locked)shootPortal()});
+document.addEventListener('mousemove',e=>{if(!locked)return;player.yaw-=e.movementX*.0022;player.pitch-=e.movementY*.0022;player.pitch=Math.max(-1.45,Math.min(1.45,player.pitch))});
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Digit1'||e.code==='Digit2'){selected=e.code==='Digit1'?0:1;document.querySelector('#selected').textContent=selected===0?'PORTAL AZUL SELECIONADO':'PORTAL LARANJA SELECIONADO'}});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+const raycaster=new THREE.Raycaster();
+function shootPortal(){
+ camera.updateMatrixWorld();raycaster.setFromCamera(new THREE.Vector2(0,0),camera);
+ const hits=raycaster.intersectObjects(scene.children,true).filter(h=>h.object!==A.surface&&h.object!==B.surface&&!h.object.userData.noPortal);
+ if(!hits.length)return;const hit=hits[0];if(hit.distance>22)return;
+ const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);if(Math.abs(normal.y)>.8){notice.textContent='Mire para uma parede para posicionar o portal.';return}
+ const p=portals[selected];p.group.position.copy(hit.point).addScaledVector(normal,.035);p.group.position.y=Math.max(.05,Math.min(1.4,p.group.position.y));p.group.rotation.y=Math.atan2(normal.x,normal.z);
+ // Keep the pair usable and avoid aiming into the floor.
+ notice.textContent=selected===0?'Portal azul reposicionado.':'Portal laranja reposicionado.';
+}
+function portalCrossing(prev,next){
+ for(const p of portals){const src=p.group,dst=p.other.group;const a=src.worldToLocal(prev.clone()),b=src.worldToLocal(next.clone());
+  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>.1&&b.y<portalH-.05){
+   const mapped=new THREE.Vector3(-b.x,b.y,-b.z);dst.localToWorld(mapped);player.pos.copy(mapped).add(dst.getWorldDirection(new THREE.Vector3()).multiplyScalar(.35));
+   const direction=new THREE.Vector3(Math.sin(player.yaw),0,-Math.cos(player.yaw));const dl=src.worldToLocal(prev.clone().add(direction)).sub(src.worldToLocal(prev.clone()));dl.x=-dl.x;dl.z=-dl.z;const worldDir=dst.localToWorld(dl.clone().add(dst.position.clone())).sub(dst.position);player.yaw=Math.atan2(worldDir.x,-worldDir.z);player.vel.applyAxisAngle(new THREE.Vector3(0,1,0),Math.PI);notice.textContent='Travessia concluída — espaço conectado!';
+   return true;
+  }
+ }return false;
+}
+let last=performance.now(),jumpWasDown=false;
+function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.04);last=now;
+ const forward=new THREE.Vector3(Math.sin(player.yaw),0,-Math.cos(player.yaw));const right=new THREE.Vector3(Math.cos(player.yaw),0,Math.sin(player.yaw));const wish=new THREE.Vector3();
+ if(keys.KeyW)wish.add(forward);if(keys.KeyS)wish.sub(forward);if(keys.KeyD)wish.add(right);if(keys.KeyA)wish.sub(right);if(wish.lengthSq())wish.normalize();
+ player.vel.x+=(wish.x*7-player.vel.x)*Math.min(1,dt*9);player.vel.z+=(wish.z*7-player.vel.z)*Math.min(1,dt*9);
+ if(keys.Space&&!jumpWasDown&&player.grounded){player.vel.y=6.5;player.grounded=false}jumpWasDown=!!keys.Space;player.vel.y-=18*dt;
+ const prev=player.pos.clone();const next=player.pos.clone().addScaledVector(player.vel,dt);
+ // Simple floor and boundary collision; walls can be crossed only through visible portal openings.
+ next.y=Math.max(1.7,next.y);if(next.y<=1.7){player.vel.y=0;player.grounded=true}
+ const crossed=portalCrossing(prev,next);if(!crossed)player.pos.copy(next);
+ player.pos.x=THREE.MathUtils.clamp(player.pos.x,-14,14);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-14,14);
+ camera.position.copy(player.pos);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+ updatePortalView(A);updatePortalView(B);renderer.render(scene,camera);
+}
+requestAnimationFrame(tick);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
