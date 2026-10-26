@@ -93,18 +93,23 @@ function shootPortal(){
  p.group.position.copy(hit.point).addScaledVector(normal,.045);
  notice.textContent=selected===0?'Portal azul colocado nesta superfície.':'Portal laranja colocado nesta superfície.';
 }
+const PLAYER_EYE_HEIGHT=1.7;
 function portalCrossing(prev,next){
  for(const p of portals){
   const src=p.group,dst=p.other.group;
   src.updateMatrixWorld(true);dst.updateMatrixWorld(true);
-  const a=src.worldToLocal(prev.clone()),b=src.worldToLocal(next.clone());
-  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>.12&&b.y<portalH-.08){
-   // Atravessa o plano de origem e reaparece na mesma posição relativa no portal de destino.
-   const mapped=new THREE.Vector3(-b.x,b.y,-b.z);dst.localToWorld(mapped);
+  // Use os pés do jogador para detectar portais no chão e no teto; a câmera fica na altura dos olhos.
+  const prevFeet=prev.clone().add(new THREE.Vector3(0,-PLAYER_EYE_HEIGHT,0));
+  const nextFeet=next.clone().add(new THREE.Vector3(0,-PLAYER_EYE_HEIGHT,0));
+  const a=src.worldToLocal(prevFeet),b=src.worldToLocal(nextFeet);
+  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>-.05&&b.y<portalH-.08){
+   const mappedFeet=new THREE.Vector3(-b.x,b.y,-b.z);
+   dst.localToWorld(mappedFeet);
    const transform=new THREE.Quaternion().copy(src.quaternion).invert();
    transform.premultiply(flip);transform.premultiply(dst.quaternion);
    const exitNormal=new THREE.Vector3(0,0,1).applyQuaternion(dst.quaternion).normalize();
-   player.pos.copy(mapped).addScaledVector(exitNormal,.45);
+   // Reconstitui a posição dos olhos após mapear os pés pela abertura.
+   player.pos.copy(mappedFeet).add(new THREE.Vector3(0,PLAYER_EYE_HEIGHT,0)).addScaledVector(exitNormal,.5);
    const look=new THREE.Vector3(-Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch));
    look.applyQuaternion(transform).normalize();
    player.yaw=Math.atan2(-look.x,-look.z);
@@ -122,9 +127,13 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000
  player.vel.x+=(wish.x*7-player.vel.x)*Math.min(1,dt*9);player.vel.z+=(wish.z*7-player.vel.z)*Math.min(1,dt*9);
  if(keys.Space&&!jumpWasDown&&player.grounded){player.vel.y=6.5;player.grounded=false}jumpWasDown=!!keys.Space;player.vel.y-=18*dt;
  const prev=player.pos.clone();const next=player.pos.clone().addScaledVector(player.vel,dt);
- // Simple floor and boundary collision; walls can be crossed only through visible portal openings.
- next.y=Math.max(1.7,next.y);if(next.y<=1.7){player.vel.y=0;player.grounded=true}
- const crossed=portalCrossing(prev,next);if(!crossed)player.pos.copy(next);
+ // Testa a travessia antes de aplicar o chão sólido, senão um portal no piso nunca poderia ser atravessado.
+ const crossed=portalCrossing(prev,next);
+ if(!crossed){
+  player.pos.copy(next);
+  if(player.pos.y<=PLAYER_EYE_HEIGHT){player.pos.y=PLAYER_EYE_HEIGHT;player.vel.y=0;player.grounded=true;}
+  else player.grounded=false;
+ }
  player.pos.x=THREE.MathUtils.clamp(player.pos.x,-half+.8,half-.8);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-half+.8,half-.8);
  camera.position.copy(player.pos);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
  updatePortalView(A);updatePortalView(B);renderer.render(scene,camera);
