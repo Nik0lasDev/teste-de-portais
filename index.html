@@ -20,7 +20,7 @@
 <script type="module">
 import * as THREE from 'three';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xf0f0f0);
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);camera.position.set(0,1.7,7);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,100);camera.position.set(0,1.7,5);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xffffff,0xbfc6cf,2.2));
 const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(-5,11,7);scene.add(key);
@@ -30,7 +30,7 @@ function roomSurface(x,y,z,sx,sy,sz){
  const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),white);mesh.position.set(x,y,z);mesh.receiveShadow=true;mesh.userData.portalable=true;scene.add(mesh);portalable.push(mesh);return mesh;
 }
 // Sala-cubo branca, sem móveis, obstáculos ou decoração.
-const roomSize=24,roomHeight=12,half=roomSize/2;
+const roomSize=14,roomHeight=8,half=roomSize/2;
 roomSurface(0,-.25,0,roomSize,.5,roomSize); // chão
 roomSurface(0,roomHeight+.25,0,roomSize,.5,roomSize); // teto
 roomSurface(0,roomHeight/2,-half,roomSize,roomHeight,.5); // parede norte
@@ -50,8 +50,8 @@ function makePortal(color,pos,yaw){
  const glow=new THREE.PointLight(color,3.2,5);glow.position.set(0,portalH/2,.6);group.add(glow);
  return {group,surface,rt,color};
 }
-const A=makePortal(0x42cfff,new THREE.Vector3(0,0,-11.72),0);
-const B=makePortal(0xff713f,new THREE.Vector3(11.72,0,2),-Math.PI/2);
+const A=makePortal(0x42cfff,new THREE.Vector3(-2.2,0,-2.2),0);
+const B=makePortal(0xff713f,new THREE.Vector3(2.2,0,1.8),-Math.PI/2);
 A.other=B;B.other=A;
 const portalCam=new THREE.PerspectiveCamera();const tempPos=new THREE.Vector3(),local=new THREE.Vector3();const q1=new THREE.Quaternion(),q2=new THREE.Quaternion(),flip=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI);
 function updatePortalView(p){
@@ -65,7 +65,7 @@ function updatePortalView(p){
  renderer.setRenderTarget(p.rt);renderer.clear();renderer.render(scene,portalCam);renderer.setRenderTarget(null);
  p.surface.visible=true;p.other.surface.visible=true;
 }
-const player={pos:new THREE.Vector3(0,1.7,8),vel:new THREE.Vector3(),yaw:0,pitch:0,grounded:false};camera.position.copy(player.pos);
+const player={pos:new THREE.Vector3(0,1.7,5),vel:new THREE.Vector3(),yaw:0,pitch:0,grounded:false};camera.position.copy(player.pos);
 const keys={};let locked=false,selected=0;const portals=[A,B];const notice=document.querySelector('#notice');
 document.querySelector('#start').addEventListener('click',()=>{document.querySelector('#menu').style.display='none';document.querySelector('#hud').style.display='block';renderer.domElement.requestPointerLock()});
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&document.querySelector('#menu').style.display==='none'){notice.textContent='Clique na cena para continuar.'}});
