@@ -15,23 +15,28 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
 </head>
 <body>
-<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Um pequeno laboratório para experimentar portais conectados em um cenário tridimensional. Posicione-se, atravesse a abertura e observe como o espaço se conecta do outro lado.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
-<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Encontre as duas aberturas e atravesse-as.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: portal azul · Direito: portal laranja · Esc soltar cursor</div></div>
+<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Uma sala cúbica totalmente branca, sem obstáculos. Mire em qualquer ponto das paredes para escolher onde cada portal ficará e experimente atravessar de um para o outro.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
+<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Clique esquerdo: posicionar portal azul. Clique direito: posicionar portal laranja.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: portal azul · Direito: portal laranja · Esc soltar cursor</div></div>
 <script type="module">
 import * as THREE from 'three';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x090f1b);scene.fog=new THREE.Fog(0x090f1b,24,75);
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);camera.position.set(0,1.7,8);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xa8d8ff,0x172033,2.0));
-const key=new THREE.DirectionalLight(0xd4eaff,3);key.position.set(-8,14,8);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
-const mats={floor:new THREE.MeshStandardMaterial({color:0x182537,roughness:.83}),wall:new THREE.MeshStandardMaterial({color:0x293a50,roughness:.7}),dark:new THREE.MeshStandardMaterial({color:0x101a2a,metalness:.25,roughness:.5}),white:new THREE.MeshStandardMaterial({color:0x9db5ce,metalness:.3,roughness:.4})};
-function box(x,y,z,sx,sy,sz,mat,cast=true){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;scene.add(m);return m}
-box(0,-.25,0,30,.5,30,mats.floor);
-for(let i=-14;i<=14;i+=2){box(i,.006,0,.018,.012,30,new THREE.MeshBasicMaterial({color:0x38506b}),false);box(0,.006,i,30,.012,.018,new THREE.MeshBasicMaterial({color:0x38506b}),false)}
-// Perimeter walls and test architecture
-box(0,2,-15,30,4,.5,mats.wall);box(0,2,15,30,4,.5,mats.wall);box(-15,2,0,.5,4,30,mats.wall);box(15,2,0,.5,4,30,mats.wall);
-box(-7,1.5,-5,1,3,8,mats.wall);box(5,1.5,1,1,3,8,mats.wall);box(1,2.5,-7,5,5,.5,mats.wall);box(9,.8,-7,2,1.6,2,mats.dark);box(-9,.6,5,2,1.2,2,mats.dark);
-for(let x=-12;x<=12;x+=4)for(let z=-12;z<=12;z+=4){if(Math.abs(x)<7&&Math.abs(z)<7)continue;box(x,.035,z,.08,.04,.08,new THREE.MeshBasicMaterial({color:0x5d7b9c}),false)}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xffffff);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,160);camera.position.set(0,1.7,7);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0xbfc6cf,2.2));
+const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(-5,11,7);scene.add(key);
+const white=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92,metalness:0});
+const portalable=[];
+function roomSurface(x,y,z,sx,sy,sz){
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),white);mesh.position.set(x,y,z);mesh.receiveShadow=true;mesh.userData.portalable=true;scene.add(mesh);portalable.push(mesh);return mesh;
+}
+// Sala-cubo branca, sem móveis, obstáculos ou decoração.
+const roomSize=24,roomHeight=12,half=roomSize/2;
+roomSurface(0,-.25,0,roomSize,.5,roomSize); // chão
+roomSurface(0,roomHeight+.25,0,roomSize,.5,roomSize); // teto
+roomSurface(0,roomHeight/2,-half,roomSize,roomHeight,.5); // parede norte
+roomSurface(0,roomHeight/2,half,roomSize,roomHeight,.5); // parede sul
+roomSurface(-half,roomHeight/2,0,.5,roomHeight,roomSize); // parede oeste
+roomSurface(half,roomHeight/2,0,.5,roomHeight,roomSize); // parede leste
 // Portal surfaces are rendered from paired virtual cameras into render targets.
 const portalW=1.45,portalH=2.55,rtSize=1024;
 function makePortal(color,pos,yaw){
@@ -45,8 +50,8 @@ function makePortal(color,pos,yaw){
  const glow=new THREE.PointLight(color,3.2,5);glow.position.set(0,portalH/2,.6);group.add(glow);
  return {group,surface,rt,color};
 }
-const A=makePortal(0x42cfff,new THREE.Vector3(0,0,-14.72),0);
-const B=makePortal(0xff713f,new THREE.Vector3(14.72,0,2),-Math.PI/2);
+const A=makePortal(0x42cfff,new THREE.Vector3(0,0,-11.72),0);
+const B=makePortal(0xff713f,new THREE.Vector3(11.72,0,2),-Math.PI/2);
 A.other=B;B.other=A;
 const portalCam=new THREE.PerspectiveCamera();const tempPos=new THREE.Vector3(),local=new THREE.Vector3();const q1=new THREE.Quaternion(),q2=new THREE.Quaternion(),flip=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI);
 function updatePortalView(p){
@@ -73,10 +78,10 @@ document.addEventListener('keyup',e=>keys[e.code]=false);
 const raycaster=new THREE.Raycaster();
 function shootPortal(){
  camera.updateMatrixWorld();raycaster.setFromCamera(new THREE.Vector2(0,0),camera);
- const hits=raycaster.intersectObjects(scene.children,true).filter(h=>h.object!==A.surface&&h.object!==B.surface&&!h.object.userData.noPortal);
+ const hits=raycaster.intersectObjects(portalable,false);
  if(!hits.length)return;const hit=hits[0];if(hit.distance>22)return;
- const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);if(Math.abs(normal.y)>.8){notice.textContent='Mire para uma parede para posicionar o portal.';return}
- const p=portals[selected];p.group.position.copy(hit.point).addScaledVector(normal,.035);p.group.position.y=Math.max(.05,Math.min(1.4,p.group.position.y));p.group.rotation.y=Math.atan2(normal.x,normal.z);
+ const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);if(Math.abs(normal.y)>.8){notice.textContent='Por enquanto, posicione os portais nas paredes brancas.';return}
+ const p=portals[selected];p.group.position.copy(hit.point).addScaledVector(normal,.035);p.group.position.y=THREE.MathUtils.clamp(hit.point.y-portalH/2,.05,roomHeight-portalH-.05);p.group.rotation.y=Math.atan2(normal.x,normal.z);
  // Keep the pair usable and avoid aiming into the floor.
  notice.textContent=selected===0?'Portal azul reposicionado.':'Portal laranja reposicionado.';
 }
@@ -99,7 +104,7 @@ function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000
  // Simple floor and boundary collision; walls can be crossed only through visible portal openings.
  next.y=Math.max(1.7,next.y);if(next.y<=1.7){player.vel.y=0;player.grounded=true}
  const crossed=portalCrossing(prev,next);if(!crossed)player.pos.copy(next);
- player.pos.x=THREE.MathUtils.clamp(player.pos.x,-14,14);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-14,14);
+ player.pos.x=THREE.MathUtils.clamp(player.pos.x,-half+.8,half-.8);player.pos.z=THREE.MathUtils.clamp(player.pos.z,-half+.8,half-.8);
  camera.position.copy(player.pos);camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
  updatePortalView(A);updatePortalView(B);renderer.render(scene,camera);
 }
