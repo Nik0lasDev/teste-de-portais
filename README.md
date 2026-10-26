@@ -9,8 +9,8 @@ Abra `index.html` em um servidor estático ou publique o repositório pelo GitHu
 - **WASD:** mover
 - **Mouse:** olhar
 - **Espaço:** pular
-- **1 / 2:** selecionar portal azul ou laranja
-- **Clique esquerdo:** disparar/reposicionar o portal selecionado
+- **Clique esquerdo:** disparar/reposicionar o portal azul
+- **Clique direito:** disparar/reposicionar o portal laranja
 - **Esc:** liberar o mouse; clique na cena para retomar
 
 ## Estado do protótipo
