@@ -15,8 +15,8 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
 </head>
 <body>
-<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Um pequeno laboratório para experimentar portais conectados em um cenário tridimensional. Posicione-se, atravesse a abertura e observe como o espaço se conecta do outro lado.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>1 / 2</b> trocar o portal selecionado · <b>Botão esquerdo</b> disparar · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
-<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Encontre as duas aberturas e atravesse-as.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · 1/2 selecionar · Clique disparar portal · Esc soltar cursor</div></div>
+<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Um pequeno laboratório para experimentar portais conectados em um cenário tridimensional. Posicione-se, atravesse a abertura e observe como o espaço se conecta do outro lado.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
+<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Encontre as duas aberturas e atravesse-as.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: portal azul · Direito: portal laranja · Esc soltar cursor</div></div>
 <script type="module">
 import * as THREE from 'three';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x090f1b);scene.fog=new THREE.Fog(0x090f1b,24,75);
@@ -64,9 +64,9 @@ const player={pos:new THREE.Vector3(0,1.7,8),vel:new THREE.Vector3(),yaw:0,pitch
 const keys={};let locked=false,selected=0;const portals=[A,B];const notice=document.querySelector('#notice');
 document.querySelector('#start').addEventListener('click',()=>{document.querySelector('#menu').style.display='none';document.querySelector('#hud').style.display='block';renderer.domElement.requestPointerLock()});
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&document.querySelector('#menu').style.display==='none'){notice.textContent='Clique na cena para continuar.'}});
-renderer.domElement.addEventListener('click',()=>{if(!locked&&document.querySelector('#menu').style.display==='none')renderer.domElement.requestPointerLock();else if(locked)shootPortal()});
+renderer.domElement.addEventListener('click',()=>{if(!locked&&document.querySelector('#menu').style.display==='none')renderer.domElement.requestPointerLock();else if(locked){selected=0;document.querySelector('#selected').textContent='PORTAL AZUL SELECIONADO';shootPortal()}});\nrenderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());\nrenderer.domElement.addEventListener('mousedown',e=>{if(e.button===2&&locked){selected=1;document.querySelector('#selected').textContent='PORTAL LARANJA SELECIONADO';shootPortal()}});
 document.addEventListener('mousemove',e=>{if(!locked)return;player.yaw-=e.movementX*.0022;player.pitch-=e.movementY*.0022;player.pitch=Math.max(-1.45,Math.min(1.45,player.pitch))});
-document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Digit1'||e.code==='Digit2'){selected=e.code==='Digit1'?0:1;document.querySelector('#selected').textContent=selected===0?'PORTAL AZUL SELECIONADO':'PORTAL LARANJA SELECIONADO'}});
+document.addEventListener('keydown',e=>{keys[e.code]=true});
 document.addEventListener('keyup',e=>keys[e.code]=false);
 const raycaster=new THREE.Raycaster();
 function shootPortal(){
