@@ -108,27 +108,43 @@ function portalCrossing(prev,next){
  for(const p of portals){
   const src=p.group,dst=p.other.group;
   src.updateMatrixWorld(true);dst.updateMatrixWorld(true);
-  // Use os pés do jogador para detectar portais no chão e no teto; a câmera fica na altura dos olhos.
-  const prevFeet=prev.clone().add(new THREE.Vector3(0,-PLAYER_EYE_HEIGHT,0));
-  const nextFeet=next.clone().add(new THREE.Vector3(0,-PLAYER_EYE_HEIGHT,0));
-  const a=src.worldToLocal(prevFeet),b=src.worldToLocal(nextFeet);
-  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>-.05&&b.y<portalH-.08){
-   const mappedFeet=new THREE.Vector3(-b.x,b.y,-b.z);
-   dst.localToWorld(mappedFeet);
-   const transform=new THREE.Quaternion().copy(src.quaternion).invert();
-   transform.premultiply(flip);transform.premultiply(dst.quaternion);
-   const exitNormal=new THREE.Vector3(0,0,1).applyQuaternion(dst.quaternion).normalize();
-   // Reconstitui a posição dos olhos após mapear os pés pela abertura.
-   player.pos.copy(mappedFeet).add(new THREE.Vector3(0,PLAYER_EYE_HEIGHT,0)).addScaledVector(exitNormal,.5);
-   const look=new THREE.Vector3(-Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch));
-   look.applyQuaternion(transform).normalize();
-   player.yaw=Math.atan2(-look.x,-look.z);
-   player.pitch=Math.asin(THREE.MathUtils.clamp(look.y,-1,1));
-   player.vel.applyQuaternion(transform);
-   notice.textContent='Travessia concluída — espaço conectado!';
-   return true;
-  }
- }return false;
+  // Detecta a travessia pela posição dos olhos e calcula o ponto exato em que a câmera cruza o plano.
+  // Isso evita deslocar o jogador de uma borda do portal para a outra de uma só vez.
+  const a=src.worldToLocal(prev.clone());
+  const b=src.worldToLocal(next.clone());
+  if(!(a.z>0&&b.z<=0))continue;
+  const denominator=a.z-b.z;
+  if(denominator<1e-6)continue;
+  const t=THREE.MathUtils.clamp(a.z/denominator,0,1);
+  const intersection=a.clone().lerp(b,t);
+  if(Math.abs(intersection.x)>portalW*.5-.12||
+     intersection.y<.12||intersection.y>portalH-.12)continue;
+
+  // Mapeia o ponto de cruzamento e a parte restante do movimento através do portal.
+  const mappedIntersection=new THREE.Vector3(-intersection.x,intersection.y,-.06);
+  dst.localToWorld(mappedIntersection);
+  const transform=new THREE.Quaternion()
+   .copy(dst.quaternion)
+   .multiply(flip)
+   .multiply(src.quaternion.clone().invert());
+
+  const remaining=next.clone().sub(prev).multiplyScalar(1-t).applyQuaternion(transform);
+  const exitNormal=new THREE.Vector3(0,0,1).applyQuaternion(dst.quaternion).normalize();
+  player.pos.copy(mappedIntersection).add(remaining).addScaledVector(exitNormal,.12);
+
+  // Mantém a direção da visão e a velocidade coerentes com a saída.
+  const look=new THREE.Vector3(
+   -Math.sin(player.yaw)*Math.cos(player.pitch),
+   Math.sin(player.pitch),
+   -Math.cos(player.yaw)*Math.cos(player.pitch)
+  ).applyQuaternion(transform).normalize();
+  player.yaw=Math.atan2(-look.x,-look.z);
+  player.pitch=Math.asin(THREE.MathUtils.clamp(look.y,-1,1));
+  player.vel.applyQuaternion(transform);
+  notice.textContent='Travessia pelo portal concluída.';
+  return true;
+ }
+ return false;
 }
 let last=performance.now(),jumpWasDown=false;
 function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.04);last=now;
