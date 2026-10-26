@@ -15,8 +15,8 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
 </head>
 <body>
-<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Uma sala cúbica totalmente branca, sem obstáculos. Mire em qualquer ponto das paredes para escolher onde cada portal ficará e experimente atravessar de um para o outro.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
-<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Clique esquerdo: posicionar portal azul. Clique direito: posicionar portal laranja.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: portal azul · Direito: portal laranja · Esc soltar cursor</div></div>
+<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Uma sala cúbica branca. Mire em qualquer superfície — paredes, chão ou teto — para posicionar cada portal e atravessar entre eles.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
+<div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Clique esquerdo: portal azul em qualquer superfície. Clique direito: portal laranja.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: azul · Direito: laranja · Portais em paredes, chão e teto · Esc soltar cursor</div></div>
 <script type="module">
 import * as THREE from 'three';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xf0f0f0);
