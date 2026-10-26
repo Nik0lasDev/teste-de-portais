@@ -95,6 +95,8 @@ function portalCrossing(prev,next){
    const localToDestination=dst.quaternion.clone().multiply(portalTurn).multiply(sourceToLocal);
    const viewDirection=new THREE.Vector3(-Math.sin(player.yaw),0,-Math.cos(player.yaw)).applyQuaternion(localToDestination).normalize();
    player.yaw=Math.atan2(-viewDirection.x,-viewDirection.z);
+   // Normalize yaw to avoid accumulated angle drift after repeated portal crossings.
+   player.yaw=Math.atan2(Math.sin(player.yaw),Math.cos(player.yaw));
    player.vel.applyQuaternion(localToDestination);
    notice.textContent='Travessia concluída — espaço conectado!';
    return true;
