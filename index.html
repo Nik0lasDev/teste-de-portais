@@ -15,7 +15,7 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js"}}</script>
 </head>
 <body>
-<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Uma sala cúbica branca. Mire em qualquer superfície — paredes, chão ou teto — para posicionar cada portal e atravessar entre eles.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
+<div id="menu"><section class="panel"><div class="kicker">LABORATÓRIO DE FÍSICA · PROTÓTIPO 01</div><h1>PORTAIS<span> 3D</span></h1><p>Uma sala cúbica branca. Mire em uma parede, no chão ou no teto para posicionar cada portal e atravessar entre eles.</p><p><b>WASD</b> mover · <b>Mouse</b> olhar · <b>Espaço</b> pular · <b>Botão esquerdo</b> portal azul · <b>Botão direito</b> portal laranja · <b>Esc</b> liberar o mouse</p><button class="start" id="start">ENTRAR NO LABORATÓRIO →</button></section></div>
 <div id="hud"><div class="top">PORTAL LAB <b> / EXPERIMENTO 01</b><br><span id="selected">PORTAL AZUL SELECIONADO</span></div><div class="cross"></div><div id="notice">Clique esquerdo: portal azul em qualquer superfície. Clique direito: portal laranja.</div><div class="help">WASD mover · Mouse olhar · Espaço pular · Esquerdo: azul · Direito: laranja · Portais em paredes, chão e teto · Esc soltar cursor</div></div>
 <script type="module">
 import * as THREE from 'three';
@@ -79,23 +79,37 @@ const raycaster=new THREE.Raycaster();
 function shootPortal(){
  camera.updateMatrixWorld();raycaster.setFromCamera(new THREE.Vector2(0,0),camera);
  const hits=raycaster.intersectObjects(portalable,false);
- if(!hits.length)return;const hit=hits[0];if(hit.distance>22)return;
- const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);if(Math.abs(normal.y)>.8){notice.textContent='Por enquanto, posicione os portais nas paredes brancas.';return}
- const p=portals[selected];p.group.position.copy(hit.point).addScaledVector(normal,.035);p.group.position.y=THREE.MathUtils.clamp(hit.point.y-portalH/2,.05,roomHeight-portalH-.05);p.group.rotation.y=Math.atan2(normal.x,normal.z);
- // Keep the pair usable and avoid aiming into the floor.
- notice.textContent=selected===0?'Portal azul reposicionado.':'Portal laranja reposicionado.';
+ if(!hits.length){notice.textContent='Mire em uma superfície da sala.';return;}
+ const hit=hits[0];if(hit.distance>22){notice.textContent='Chegue mais perto da superfície.';return;}
+ const normal=hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+ const p=portals[selected];
+ // Constrói uma orientação completa: a frente do portal fica perpendicular à superfície atingida.
+ // Em chão/teto, usa o eixo Z como referência para manter o portal alinhado e previsível.
+ const upReference=Math.abs(normal.y)>.92?new THREE.Vector3(0,0,1):new THREE.Vector3(0,1,0);
+ const right=new THREE.Vector3().crossVectors(upReference,normal).normalize();
+ const up=new THREE.Vector3().crossVectors(normal,right).normalize();
+ const basis=new THREE.Matrix4().makeBasis(right,up,normal);
+ p.group.quaternion.setFromRotationMatrix(basis);
+ p.group.position.copy(hit.point).addScaledVector(normal,.045);
+ notice.textContent=selected===0?'Portal azul colocado nesta superfície.':'Portal laranja colocado nesta superfície.';
 }
 function portalCrossing(prev,next){
- for(const p of portals){const src=p.group,dst=p.other.group;const a=src.worldToLocal(prev.clone()),b=src.worldToLocal(next.clone());
-  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>.1&&b.y<portalH-.05){
+ for(const p of portals){
+  const src=p.group,dst=p.other.group;
+  src.updateMatrixWorld(true);dst.updateMatrixWorld(true);
+  const a=src.worldToLocal(prev.clone()),b=src.worldToLocal(next.clone());
+  if(a.z>0&&b.z<=0&&Math.abs(b.x)<portalW*.48&&b.y>.12&&b.y<portalH-.08){
+   // Atravessa o plano de origem e reaparece na mesma posição relativa no portal de destino.
    const mapped=new THREE.Vector3(-b.x,b.y,-b.z);dst.localToWorld(mapped);
-   // Saia pela frente do portal de destino, afastando o jogador do plano para evitar retravessia imediata.
+   const transform=new THREE.Quaternion().copy(src.quaternion).invert();
+   transform.premultiply(flip);transform.premultiply(dst.quaternion);
    const exitNormal=new THREE.Vector3(0,0,1).applyQuaternion(dst.quaternion).normalize();
-   player.pos.copy(mapped).addScaledVector(exitNormal,.4);
-   // Os portais são verticais: aplique a diferença de orientação diretamente ao yaw e à velocidade.
-   const rotationDelta=dst.rotation.y-src.rotation.y+Math.PI;
-   player.yaw=Math.atan2(Math.sin(player.yaw+rotationDelta),Math.cos(player.yaw+rotationDelta));
-   player.vel.applyAxisAngle(new THREE.Vector3(0,1,0),rotationDelta);
+   player.pos.copy(mapped).addScaledVector(exitNormal,.45);
+   const look=new THREE.Vector3(-Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch));
+   look.applyQuaternion(transform).normalize();
+   player.yaw=Math.atan2(-look.x,-look.z);
+   player.pitch=Math.asin(THREE.MathUtils.clamp(look.y,-1,1));
+   player.vel.applyQuaternion(transform);
    notice.textContent='Travessia concluída — espaço conectado!';
    return true;
   }
